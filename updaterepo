@@ -1,15 +1,18 @@
 #!/usr/bin/bash
 
 GITHUB_USERNAME=Sheriefalgalaly
-GITHUB_TOKEN=Pass3095
+GITHUB_TOKEN=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
 REPO_NAME=Embedded_linux
+
+
+
 
 REPO_URL="https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/${GITHUB_USERNAME}/${REPO_NAME}.git"
 git init 
 
 git add .
-com="$1"
-git commit -m "$com"
+
+git commit --amend -m "$1"  # Amend the commit with the provided message
 
 git remote add origin https://github.com/Sheriefalgalaly/Embedded_linux.git
 git branch -M main
@@ -19,7 +22,7 @@ spawn git push -u origin main
 expect \"Username for 'https://github.com': \"
 send \"$GITHUB_USERNAME\r\"
 expect \"Password for 'https://github.com': \"
-send \"$GITHUB_TOKEN\r\"
+send \"$GITHUB_TOKEN\"
 interact
 "
 
