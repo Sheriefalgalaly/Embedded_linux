@@ -1,0 +1,52 @@
+#!/usr/bin/bash
+
+
+#get var
+#for loop to get each file 
+#get extension 
+#search for folder with the same name or not 
+
+
+declare path=$1
+declare ext
+declare extensionless=misc
+declare basename="task1"
+
+#if the path is empty get the pwd 
+if [ -e $path ]; then
+     path=`pwd`
+fi
+
+
+
+for filename in `ls $path`; do
+#get extension 
+ext=$(echo "$filename" | sed 's/^[^.]*\(\.*\)/\1/' | sed 's/\.//')
+
+
+if [ -f "$filename" ] && [ "$filename" != "$basename" ]; then
+    echo "$filename is a file."
+
+    if [ -z "$ext" ]; then   # the file doesn't contain extension 
+    echo "The variable is empty."
+
+        if find "$path" -maxdepth 1 -type d -name "$extensionless" | grep -q .; then
+            echo "Folder $extensionless exists."
+        else 
+        echo "Folder $extensionless doesn't exist."
+            `mkdir $extensionless`
+        fi
+         `mv $filename $extensionless `
+
+    else
+        if find "$path" -maxdepth 1 -type d -name "$ext" | grep -q .; then
+            echo "Folder $ext exists."      
+        else 
+        echo "Folder $ext doesn't exist."
+            `mkdir $ext`
+           
+        fi
+         `mv $filename $ext `
+    fi
+fi
+done

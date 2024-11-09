@@ -1,0 +1,232 @@
+#!/usr/bin/bash -i
+
+# Create a Bash script that serves as a 
+                #   simple process monitor, 
+                #   allowing users to view, 
+                #   manage, and 
+                #   analyze running processes on a Unix-like system.
+
+# Define the configuration file path
+# Source the configuration file
+source config.conf
+
+declare -i id
+
+
+# declare -i id=$1
+# 1. Process Information:
+# Provide detailed information about a specific process, including its PID, parent process ID, user, CPU and memory usage, etc.
+
+function name () {
+
+    # Check if a process name is provided as an argument
+    if [ -z "$1" ]; then
+        echo "Please provide a process name."
+        return 1
+    fi
+  
+   id=$(pgrep "$1")
+   
+   if [ -z  $id ] || [ $id == 0 ]; then
+    echo "this process doesn't exist"
+   else 
+    echo "pid:$id"  
+    ps -p $id -o ppid,user,%cpu,%mem,command  | awk 'NR>1 {print "PPID:", $1, "USER:", $2, "CPU Usage:", $3, "%", "Memory Usage:", $4, "%", "COMMAND:", $5}' 
+   fi
+}
+# name "$1"
+
+
+# 2. Kill a Process:
+# Allow users to terminate a specific process by entering its PID.
+
+declare -i num=0
+function killprocess(){
+
+    if [ -z "$1" ]; then
+        echo "Please provide a pid"
+        return 1
+    else 
+        top -b -n 1 | grep $1  | kill $1 
+        echo " Process is killes successfully"
+      
+    fi
+
+}
+
+# 3. Process Statistics:
+# Display overall system process statistics, such as the total number of processes, memory usage, and CPU load.
+
+declare -i numTasks 
+function num_tasks(){
+    numTasks=$(top -n 1 | grep "Tasks" | awk '{print $2}')
+    echo "number of tasks: $numTasks"
+
+    free -h | awk 'FNR == 2 {print  "total memory: " $2"\nused memory "$3"\nfree memory: "$4}'
+
+    uptime | awk -F "load average:" '{print $2}' | awk '{print "load average in 1 min: "$1", in 5 mins: "$2", in 15 mins: "$3}'
+}
+# 4. Real-time Monitoring:
+# Implement real-time monitoring, updating the display at regular intervals to show the latest process information.
+
+function monitor_realtime()
+{
+
+   top -d $update_interval
+}
+
+# 5. Search and Filter:
+# Allow users to search for processes based on criteria such as name, user, or resource usage.
+
+function select_filter(){
+    echo "============================"
+    read -p "select  a search criteria
+                        1-name
+                        2-user
+                        3-Resource 
+        Select Criteria " search
+    echo "$search"
+
+    if (( search == 1 )); then    #name
+        read -p "provide name to search: " name
+        echo "$name"
+        
+        echo " USER || PID  ||%CPU ||%MEM  || VSZ  || RSS   ||  STAT    ||    COMMAND  "
+        top -b -n 1 | grep "$name" | awk '{print $1" ||" $2"  || " $3" || " $4" || " $5"  ||  " $6"  ||   " $12 }'
+
+    elif (( search == 2 )); then  #user 
+        read -p "provide user to search: " name
+        top -u "$name"
+    elif (( search == 3 )); then  #resource usage
+        read -p "write a threshold to filter cpu usage: " filter
+        if [ -z "$filter" ]; then
+        echo " ................... pleas provide a threshold to filter "
+        else 
+            echo "pid: " " user: "  "  Cpu%: "  "  Command: "
+            top -b -n 1 | awk -v filter="$filter" 'NR >= 7 && $9 > filter {print $1"   "$2"   "  $9 "     " $12 }'
+        
+        fi
+    fi
+}
+end
+ 
+
+# 6. Interactive Mode:
+# Implement an interactive mode where users can choose operations from a menu.
+        # 1-process info 
+        # 2-kill a process 
+        # 3-realtime monitor 
+        # 4-search and filter 
+
+
+
+
+# Function to display the menu
+display_menu() {
+    clear
+    echo "========================================"
+    echo "            Select an Option           "
+    echo "========================================"
+    echo "Use the arrow keys to navigate and press Enter to select"
+    echo ""
+    echo "1. Process Information"
+    echo "2. Kill a Process"
+    echo "3. Process Statistics"
+    echo "4. monitor_realtime"
+    echo "5. select_filter"
+    echo "========================================"
+}
+
+# Function to handle keypresses
+detect_arrow_key() {
+    # Use stty to disable input buffering and echoing
+    stty -icanon -echo time 0 min 0
+
+    # Read a single character input (no buffering)
+    IFS= read -r -n1 key
+
+    # Check if the key is an escape sequence
+    if [[ "$key" == $'\x1b' ]]; then
+        # If the first character is ESC, it's the beginning of an escape sequence
+        IFS= read -r -n2 -t 0.1 key
+        case "$key" in
+            "[A")   return 1 ;;  # Up Arrow
+            "[B") return 2 ;;  # Down Arrow
+            "[C") return 0 ;;  # Right Arrow (not used here)
+            "[D") return 0 ;;  # Left Arrow (not used here)
+            *) return 0 ;;     # Unknown Key
+        esac
+    else
+     echo "Ffffffffffffffff"
+        return 0  # Enter key or other characters
+    fi
+
+    # Restore the terminal settings
+    stty sane
+}
+
+# Main loop for menu selection
+menu_navigation() {
+    local cursor=5
+    while true; do
+        display_menu
+
+        # Set cursor position
+        echo -e "\033[$cursor;1H"  # Move cursor to the current position
+
+        detect_arrow_key
+        case $? in
+            1)  # Up arrow
+                ((cursor--))
+                [ $cursor -lt 5 ] && cursor=9
+                ;;
+            2)  # Down arrow
+                ((cursor++))
+                [ $cursor -gt 9 ] && cursor=5
+                ;;
+            0)  # Enter key pressed
+                clear
+                stty sane   #enable input buffering and echoing
+
+                case $cursor in
+                    5) #proces info 
+                       read -p "Provide a proces name: " processname
+                       name "$processname"
+                       break ;;
+
+                    6) #kill a process  
+                        read -p "provide the PID of the processor: " pid
+                        killprocess $pid
+                        break ;;
+
+                    7) #Process Statistics  
+                        num_tasks
+                        break ;;
+                    8) #monitor_realtime
+                        monitor_realtime
+                        break ;;
+                    9)  #select filter 
+                        select_filter
+                        break;;
+                esac
+                ;;
+        esac
+      
+    done
+}
+
+# Call the menu navigation function
+menu_navigation
+
+
+
+# 7. Resource Usage Alerts:
+# Set up alerts for processes exceeding predefined resource usage thresholds.
+
+
+
+# 8. Logging:
+# Include logging features to record process-related activities, especially when a process is terminated.
+
+
+
