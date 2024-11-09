@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
 GITHUB_USERNAME=Sheriefalgalaly
-GITHUB_TOKEN=Pass3095
+GITHUB_TOKEN=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
 REPO_NAME=Embedded_linux
 
 REPO_URL="https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/${GITHUB_USERNAME}/${REPO_NAME}.git"
