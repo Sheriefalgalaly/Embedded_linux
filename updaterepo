@@ -1,11 +1,9 @@
 #!/usr/bin/bash
 
 GITHUB_USERNAME=Sheriefalgalaly
-<<<<<<< HEAD
+
 GITHUB_TOKEN=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
-=======
-GITHUB_TOKEN=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
->>>>>>> 7b631e82dfdb1c6c1d0c0b1b61b0e649137a1043
+
 REPO_NAME=Embedded_linux
 
 
@@ -16,7 +14,7 @@ git init
 
 git add .
 
-git commit --amend -m "$1"  # Amend the commit with the provided message
+git commit -m "$1"  # Amend the commit with the provided message
 
 git remote add origin https://github.com/Sheriefalgalaly/Embedded_linux.git
 git branch -M main
